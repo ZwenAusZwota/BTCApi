@@ -2,6 +2,7 @@ import requests
 import simplejson as json
 import time, datetime
 import hmac, hashlib
+import sys
 
 class BTCException(Exception):
 	def __init__(self, value):
@@ -297,7 +298,7 @@ class BTCApi:
 	def doRequest(self, api_method, parameters = {}):
 		# Check if the method exists
 		if not api_method in self.method_settings:
-			raise BTCException('API-Method >>' + api_method + '<< doesn´t exists')
+			raise BTCException('API-Method >>' + api_method + '<< doesnt exists')
 
 		# Are all mandatory parameters given?
 		if 'parameters' in self.method_settings[api_method]:
@@ -344,7 +345,9 @@ class BTCApi:
 		
 		p_get_parameters = ''
 		p_get_parameters = '&'.join(get_parameters)
-		prepared_get_parameters = '?' + p_get_parameters
+		prepared_get_parameters = ''
+		if len(p_get_parameters) > 0:
+			prepared_get_parameters = '?'+p_get_parameters
 
 		http_method = self.method_settings[api_method]['http_method']
 		uri         = self.options['uri'] + 'v' + str(self.options['api_version']) + '/' + self.method_settings[api_method]['entity'] + id + subentity + prepared_get_parameters
@@ -356,18 +359,21 @@ class BTCApi:
 
 		hmac_data = '#'.join([http_method, uri, self.api_key, nonce, prepared_post_parameters_hash])
 		
-		key_bytes= bytes(self.secret, 'utf-8')
-		data_bytes = bytes(hmac_data, 'utf-8')
+		key_bytes= self.secret
+		data_bytes = hmac_data
+		if sys.version_info >= (3,0):
+			key_bytes= bytes(self.secret, 'utf-8')
+			data_bytes = bytes(hmac_data, 'utf-8')
 		s_hmac = hmac.new(key_bytes,data_bytes,hashlib.sha256).hexdigest()
 
 		request_headers[self.HEADER_X_API_SIGNATURE] = s_hmac
-
+		result = ''
 		session = requests.Session()
 		result = session.get(uri,headers=request_headers).text
 
 		if result == '':
 			raise BTCException('no data')
 
-		#hier noch etwas Fehlerhandling für die Verbindung!
+		#hier noch etwas Fehlerhandling fuer die Verbindung!
 		
 		return json.loads(result)
