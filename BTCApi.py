@@ -343,11 +343,13 @@ class BTCApi:
 		if self.HTTP_METHOD_GET == self.method_settings[api_method]['http_method']:
 			get_parameters = parameters
 		
-		p_get_parameters = ''
-		p_get_parameters = '&'.join(get_parameters)
 		prepared_get_parameters = ''
-		if len(p_get_parameters) > 0:
-			prepared_get_parameters = '?'+p_get_parameters
+		for key in get_parameters:
+			if prepared_get_parameters != '':
+				prepared_get_parameters += '&'
+			prepared_get_parameters += key + '=' + str(get_parameters[key])
+		if len(prepared_get_parameters) > 0:
+			prepared_get_parameters = '?'+prepared_get_parameters
 
 		http_method = self.method_settings[api_method]['http_method']
 		uri         = self.options['uri'] + 'v' + str(self.options['api_version']) + '/' + self.method_settings[api_method]['entity'] + id + subentity + prepared_get_parameters
@@ -372,7 +374,8 @@ class BTCApi:
 		result = session.get(uri,headers=request_headers).text
 
 		if result == '':
-			raise BTCException('no data')
+			return result
+		#	raise BTCException('no data')
 
 		#hier noch etwas Fehlerhandling fuer die Verbindung!
 		
