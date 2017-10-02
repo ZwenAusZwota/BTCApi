@@ -313,7 +313,7 @@ class BTCApi:
 		now = datetime.datetime.now()
 		nonce_f = time.mktime(now.timetuple())*1e6 + now.microsecond
 		nonce = str('%16.0f' % nonce_f)
-		
+
 		id        = ''
 		subentity = ''
 
@@ -335,7 +335,6 @@ class BTCApi:
 				prepared_post_parameters += '&'
 			prepared_post_parameters += key + '=' + str(post_parameters[key])
 
-		
 		md5 = hashlib.md5()
 		md5.update(prepared_post_parameters.encode("utf-8"))
 		prepared_post_parameters_hash = md5.hexdigest()
@@ -372,11 +371,14 @@ class BTCApi:
 		request_headers[self.HEADER_X_API_SIGNATURE] = s_hmac
 		result = ''
 		session = requests.Session()
-
-		if len( prepared_post_parameters ) > 0:
+		
+		if self.HTTP_METHOD_POST == http_method:
 			result = session.post(uri,headers=request_headers, data=post_parameters).text
-		else:
+		elif self.HTTP_METHOD_GET == http_method:
 			result = session.get(uri,headers=request_headers).text
+		elif self.HTTP_METHOD_DELETE == http_method:
+			pass
+		
 
 		if result == '':
 			return result
@@ -384,5 +386,8 @@ class BTCApi:
 
 		#hier noch etwas Fehlerhandling fuer die Verbindung!
 		
-		return json.loads(result)
-		
+		try:
+			js = json.loads(result)
+			return js
+		except:
+			return {}
